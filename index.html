@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style type="text/css">
+        .button{
+            width:56px;
+            height:30px;
+            float:right;
+            margin-left:10px;
+        }
+        .talk_con{
+            width:600px;
+            height:500px;
+            border:1px solid #666;
+            margin:50px auto 0;
+            background:#f9f9f9;
+        }
+        .talk_show{
+            width:580px;
+            height:420px;
+            border:1px solid #666;
+            background:#fff;
+            margin:10px auto 0;
+            overflow:auto;
+        }
+        .talk_input{
+            width:580px;
+            margin:10px auto 0;
+        }
+        .whotalk{
+            width:80px;
+            height:30px;
+            float:left;
+            outline:none;
+        }
+        .talk_word{
+            /* word-wrap: break-word; */
+            width:420px;
+            height:26px;
+            padding:0px;
+            float:left;
+            margin-left:10px;
+            outline:none;
+            text-indent:10px;
+        }        
+        .talk_sub{
+            width:56px;
+            height:30px;
+            float:left;
+            margin-left:10px;
+        }
+        .atalk{
+           margin:10px; 
+           text-align: left;
+        }
+        .atalk span{
+            display:inline-block;
+            background:#0181cc;
+            border-radius:10px;
+            color:#fff;
+            padding:5px 10px;
+        }
+        .btalk{
+            margin:10px;
+            text-align:right;
+        }
+        .btalk span{
+            display:inline-block;
+            background:#ef8201;
+            border-radius:10px;
+            color:#fff;
+            padding:5px 10px;
+        }
+    </style>
+    <script type="text/javascript" src="lib/axios/dist/axios.standalone.js"></script>
+    <script type="text/javascript" src="lib/CryptoJS/rollups/hmac-sha256.js"></script>
+    <script type="text/javascript" src="lib/CryptoJS/rollups/sha256.js"></script>
+    <script type="text/javascript" src="lib/CryptoJS/components/hmac.js"></script>
+    <script type="text/javascript" src="lib/CryptoJS/components/enc-base64.js"></script>
+    <script type="text/javascript" src="lib/url-template/url-template.js"></script>
+    <script type="text/javascript" src="lib/apiGatewayCore/sigV4Client.js"></script>
+    <script type="text/javascript" src="lib/apiGatewayCore/apiGatewayClient.js"></script>
+    <script type="text/javascript" src="lib/apiGatewayCore/simpleHttpClient.js"></script>
+    <script type="text/javascript" src="lib/apiGatewayCore/utils.js"></script>
+    <script type="text/javascript" src="lib/apigClient.js"></script>
+    <script type="text/javascript" src="lib/aws-sdk.min.js"></script>
+    <script type="text/javascript" src="lib/aws-cognito-sdk.min.js"></script> 
+    <script type="text/javascript" src="lib/amazon-cognito-identity.min.js"></script> 
+    <script type="text/javascript">   
+
+        window.onload = function(){
+            var Words = document.getElementById("words");
+            
+            
+            //var Who = document.getElementById("who");
+            var TalkWords = document.getElementById("talkwords");
+            var TalkSub = document.getElementById("talksub");
+            
+            var apigClient;
+            if (document.URL.indexOf('id_token')>0)
+                {
+                var urlParams = new URLSearchParams(document.URL.split("#")[1]);
+                id_token = urlParams.get("id_token");
+                
+
+                var poolData = { 
+                        UserPoolId : 'us-east-1_V8letNCau',
+                        ClientId : '5e921phlmv57jddtstb489vcpa'
+                    };
+                
+                var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+                console.log(userPool)
+                //POTENTIAL: Region needs to be set if not already set previously elsewhere.
+                AWS.config.region = 'us-east-1';
+
+                // Add the User's Id Token to the Cognito credentials login map.
+                AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                    IdentityPoolId: 'us-east-1:652be4b0-42a9-4f2c-8ec9-408c1f4d80ba',
+                    Logins: {
+                        'cognito-idp.us-east-1.amazonaws.com/us-east-1_V8letNCau':id_token
+                            }
+                    });
+                
+                //call refresh method in order to authenticate user and get new temp credentials
+            
+                AWS.config.credentials.get(function(error) {
+                        if(!error)
+                        // Credentials will be available when this function is called.
+                            { accessKeyId = AWS.config.credentials.accessKeyId;
+                                secretAccessKey = AWS.config.credentials.secretAccessKey;
+                                sessionToken = AWS.config.credentials.sessionToken;
+                                console.log(secretAccessKey);
+                                apigClient = apigClientFactory.newClient({
+                                    apiKey: '3ojGgdpf3d3RCcKQmOq0p26GuAKce7ZX4moBX3Ar',
+                                    region: "us-east-1",
+                                    accessKey: accessKeyId,
+                                    secretKey: secretAccessKey,
+                                    sessionToken: sessionToken
+                                });
+                                console.log(apigClient)
+                                }
+                    else
+                    {   alert('log in error');
+                            apigClient = apigClientFactory.newClient({
+                            apiKey: '3ojGgdpf3d3RCcKQmOq0p26GuAKce7ZX4moBX3Ar',
+                            // region: "us-east-1",
+                        });
+                    }
+
+                });
+                AWS.config.credentials.refresh((error) => {
+                if (error) {
+                    alert('please log in')
+                    console.error(error);
+                } else {
+                    console.log('Successfully logged!');
+                }
+            });
+            }
+            else
+            {   alert('not log in');
+                   apigClient = apigClientFactory.newClient({
+                            apiKey: '3ojGgdpf3d3RCcKQmOq0p26GuAKce7ZX4moBX3Ar',
+                            // region: "us-east-1",
+                        });
+            }
+        
+
+
+
+
+
+            TalkSub.onclick = function(){
+	            
+                
+                if(TalkWords.value == ""){
+	                 
+                    alert("blank message");
+                    return;
+                }               
+                
+                str1 = '<div class="btalk"><span>' + TalkWords.value +'</span></div>';
+                Words.innerHTML = Words.innerHTML + str1;
+                var scrollObject = document.getElementById("words");
+                console.log(scrollObject.scrollHeight)
+                scrollObject.scrollTop = scrollObject.scrollHeight
+                
+                console.log(apigClient)
+                var params = {};
+                var body = { 
+                    'data':TalkWords.value  
+                };
+
+                var additionalParams = {};
+                apigClient.chatbotPost(params, body, additionalParams)//
+                    .then(function(result){
+                        console.log(result.data.body);
+                        response = result.data.body;
+                        str2 = '<div class="atalk"><span>' + response +'</span></div>';
+                        Words.innerHTML = Words.innerHTML + str2;
+                        
+                        // var scrollObject = document.getElementById("words");
+                        // console.log(scrollObject.scrollHeight)
+                        scrollObject.scrollTop = scrollObject.scrollHeight
+                    // Add success callback code here.
+                    }).catch( function(result){
+                    // Add error callback code here.
+                        console.log(result);
+                    });
+                    
+              
+                
+                
+                
+
+               TalkWords.value = '';
+
+            }
+        }
+            
+        
+
+
+    </script>
+</head>
+<body background='welcome2.jpg'>
+    <div class="talk_con">
+        <div class="talk_show" id="words">
+         
+        </div>
+        <a href="https://columbia19chatbot.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=5e921phlmv57jddtstb489vcpa&redirect_uri=https://dz5u46ujv17s.cloudfront.net/index.html
+        " class="button">sign in</a>
+        <div class="talk_input">
+               
+           
+            <input type="text" class="talk_word" id="talkwords">
+            <input type="button" value="send" class="talk_sub" id="talksub">
+           
+        </div>
+    </div>
+</body>
+</html>
